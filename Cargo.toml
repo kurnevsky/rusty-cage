@@ -1,0 +1,10 @@
+[package]
+name = "rusty-cage"
+version = "0.1.0"
+authors = ["Kurnevsky Evgeny <kurnevsky@gmail.com>"]
+license = "AGPL-3.0+"
+
+[dependencies]
+libc = "*"
+seccomp-sys = "*"
+clap = "*"
