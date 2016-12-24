@@ -6,5 +6,4 @@ license = "AGPL-3.0+"
 
 [dependencies]
 libc = "*"
-seccomp-sys = "*"
 clap = "*"

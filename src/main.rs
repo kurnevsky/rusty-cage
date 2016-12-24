@@ -1,5 +1,4 @@
 extern crate libc;
-extern crate seccomp_sys;
 extern crate clap;
 
 mod seccomp;
