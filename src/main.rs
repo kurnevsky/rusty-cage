@@ -1,6 +1,7 @@
 extern crate libc;
 extern crate clap;
 
+mod seccomp_vm;
 mod seccomp;
 
 use clap::{Arg, App, SubCommand};
