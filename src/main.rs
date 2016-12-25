@@ -1,6 +1,13 @@
+#![feature(plugin)]
+#![plugin(phf_macros)]
+
 extern crate libc;
 extern crate clap;
+#[macro_use]
+extern crate cfg_if;
+extern crate phf;
 
+mod syscall;
 mod seccomp_vm;
 mod seccomp;
 

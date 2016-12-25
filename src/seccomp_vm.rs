@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use libc::*;
 
 pub const SECCOMP_RET_KILL: u32 = 0x00000000; // kill the task immediately
