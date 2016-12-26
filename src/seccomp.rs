@@ -1,5 +1,6 @@
 use libc::*;
 use seccomp_vm::*;
+use syscall::*;
 
 const PR_SET_SECCOMP: c_int = 22;
 const PR_SET_NO_NEW_PRIVS: c_int = 38;
@@ -24,7 +25,20 @@ fn set_no_new_privs() -> Result<(), String> {
 }
 
 fn build_program(filter_type: SeccompFilterType, syscalls_list: &[String]) -> Result<Vec<sock_filter>, String> {
-  Ok(Vec::new())
+  let (inner_ret, outer_ret) = match filter_type {
+    SeccompFilterType::Whitelist => (SECCOMP_RET_ALLOW, SECCOMP_RET_KILL),
+    SeccompFilterType::Blacklist => (SECCOMP_RET_KILL, SECCOMP_RET_ALLOW)
+  };
+  let mut result = Vec::with_capacity(syscalls_list.len() * 2 + 2);
+  // load the syscall number
+  result.push(sock_filter { code: BPF_LD + BPF_W + BPF_ABS, jt: 0, jf: 0, k: 0 });
+  for syscall in syscalls_list {
+    let number = try!(SYSCALLS.get(syscall.as_str()).cloned().ok_or_else(|| format!("Unknown syscall name: {}", syscall)));
+    result.push(sock_filter { code: BPF_JMP + BPF_JEQ + BPF_K, jt: 0, jf: 1, k: number });
+    result.push(sock_filter { code: BPF_RET + BPF_K, jt: 0, jf: 0, k: inner_ret });
+  }
+  result.push(sock_filter { code: BPF_RET + BPF_K, jt: 0, jf: 0, k: outer_ret });
+  Ok(result)
 }
 
 fn set_seccomp_filter(filter_type: SeccompFilterType, syscalls_list: &[String]) -> Result<(), String> {

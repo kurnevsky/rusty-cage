@@ -57,12 +57,12 @@ pub struct sock_filter {
   pub code: u16,
   pub jt: u8,
   pub jf: u8,
-  pub k: u32,
+  pub k: u32
 }
 
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct sock_fprog {
   pub len: c_ushort,
-  pub filter: *const sock_filter,
+  pub filter: *const sock_filter
 }
