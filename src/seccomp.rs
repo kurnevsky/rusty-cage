@@ -6,30 +6,45 @@ const PR_SET_NO_NEW_PRIVS: c_int = 38;
 
 const SECCOMP_MODE_FILTER: c_ulong = 2;
 
-pub fn acticate() -> Result<(), String> {
-  let set_no_new_privs_result = unsafe {
+fn set_no_new_privs() -> Result<(), String> {
+  let result = unsafe {
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)
   };
-  if set_no_new_privs_result != 0 {
-    return Err(format!("Failed to set NO_NEW_PRIVS flag with status: {}", set_no_new_privs_result));
+  if result == 0 {
+    Ok(())
+  } else {
+    Err(format!("Failed to set NO_NEW_PRIVS flag with status: {}", result))
   }
-  let vec = vec!(
+}
+
+fn build_program() -> Vec<sock_filter> {
+  vec!(
     sock_filter {
       code: 0,
       jt: 0,
       jf: 0,
       k: 1,
     }
-  );
+  )
+}
+
+fn set_seccomp_filter() -> Result<(), String> {
+  let cmds = build_program();
   let prog = sock_fprog {
-    len: vec.len() as c_ushort,
-    filter: vec.as_ptr(),
+    len: cmds.len() as c_ushort,
+    filter: cmds.as_ptr(),
   };
-  let set_seccomp_result = unsafe {
+  let result = unsafe {
     prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog as *const sock_fprog as c_ulong, !0, 0)
   };
-  if set_seccomp_result != 0 {
-    return Err(format!("Failed to set seccomp filter with status: {}", set_seccomp_result));
+  if result == 0 {
+    Ok(())
+  } else {
+    Err(format!("Failed to set seccomp filter with status: {}", result))
   }
-  Ok(())
+}
+
+pub fn acticate() -> Result<(), String> {
+  try!(set_no_new_privs());
+  set_seccomp_filter()
 }
