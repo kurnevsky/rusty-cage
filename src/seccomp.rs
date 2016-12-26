@@ -73,6 +73,6 @@ fn set_seccomp_filter(filter_type: SeccompFilterType, syscalls_list: &[String]) 
 
 pub fn acticate(filter_type: SeccompFilterType, syscalls_list: &[String]) -> Result<(), String> {
   try!(set_no_new_privs());
-  // try!(set_dumpable());
+  try!(set_dumpable());
   set_seccomp_filter(filter_type, syscalls_list)
 }
