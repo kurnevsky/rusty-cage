@@ -32,5 +32,5 @@ fn main() {
                      .takes_value(true)
                      .multiple(true)))
     .get_matches();
-  println!("{:?}", seccomp::acticate())
+  println!("{:?}", seccomp::acticate(seccomp::SeccompFilterType::Blacklist, &Vec::new()))
 }
