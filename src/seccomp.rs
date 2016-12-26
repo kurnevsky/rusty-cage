@@ -2,8 +2,11 @@ use libc::*;
 use seccomp_vm::*;
 use syscall::*;
 
+const PR_SET_DUMPABLE: c_int = 4;
 const PR_SET_SECCOMP: c_int = 22;
 const PR_SET_NO_NEW_PRIVS: c_int = 38;
+
+const SUID_DUMP_DISABLE: c_int = 0;
 
 const SECCOMP_MODE_FILTER: c_ulong = 2;
 
@@ -21,6 +24,17 @@ fn set_no_new_privs() -> Result<(), String> {
     Ok(())
   } else {
     Err(format!("Failed to set NO_NEW_PRIVS flag with status: {}", result))
+  }
+}
+
+fn set_dumpable() -> Result<(), String> {
+  let result = unsafe {
+    prctl(PR_SET_DUMPABLE, SUID_DUMP_DISABLE)
+  };
+  if result == 0 {
+    Ok(())
+  } else {
+    Err(format!("Failed to set DUMPABLE flag with status: {}", result))
   }
 }
 
@@ -59,5 +73,6 @@ fn set_seccomp_filter(filter_type: SeccompFilterType, syscalls_list: &[String]) 
 
 pub fn acticate(filter_type: SeccompFilterType, syscalls_list: &[String]) -> Result<(), String> {
   try!(set_no_new_privs());
+  // try!(set_dumpable());
   set_seccomp_filter(filter_type, syscalls_list)
 }
