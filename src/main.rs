@@ -10,27 +10,57 @@ extern crate phf;
 mod syscall;
 mod seccomp_vm;
 mod seccomp;
+mod sandbox;
 
+use std::process::Command;
+use std::os::unix::process::CommandExt;
 use clap::{Arg, App, SubCommand};
 
 use libc::*;
+
+fn build_command<'a, T: Iterator<Item = &'a str>>(program: &mut T) -> Command {
+  let mut command = Command::new(program.next().expect("")); //TODO msg
+  while let Some(arg) = program.next() {
+    command.arg(arg);
+  }
+  command
+}
 
 fn main() {
   let matches = App::new("rusty-cage")
     .version("0.1.0")
     .author("Evgeny Kurnevsky <kurnevsky@gmail.com>")
     .about("Command line tool")
-    .subcommand(SubCommand::with_name("seccomp")
-                .arg(Arg::with_name("whitelist")
-                     .short("w")
-                     .long("whitelist")
-                     .takes_value(true)
-                     .multiple(true))
-                .arg(Arg::with_name("blacklist")
-                     .short("b")
-                     .long("blacklist")
-                     .takes_value(true)
-                     .multiple(true)))
+    .arg(Arg::with_name("seccomp-whitelist")
+         .long("seccomp-whitelist")
+         .conflicts_with("blacklist")
+         .value_delimiter(",")
+         .multiple(true))
+    .arg(Arg::with_name("seccomp-blacklist")
+         .long("seccomp-blacklist")
+         .conflicts_with("seccomp-whitelist")
+         .value_delimiter(",")
+         .multiple(true))
+    .arg(Arg::with_name("program")
+         .required(true)
+         .multiple(true))
     .get_matches();
-  println!("{:?}", seccomp::activate(seccomp::SeccompFilterType::Whitelist, &vec!("read".to_owned(), "write".to_owned())))
+  let seccomp_params = if let Some(seccomp_whitelist) = matches.values_of("seccomp-whitelist") {
+    Some(sandbox::SeccompParams {
+      filter_type: seccomp::SeccompFilterType::Whitelist,
+      syscalls_list: seccomp_whitelist.map(|p| p.to_owned()).collect()
+    })
+  } else if let Some(seccomp_blacklist) = matches.values_of("seccomp-blacklist") {
+    Some(sandbox::SeccompParams {
+      filter_type: seccomp::SeccompFilterType::Blacklist,
+      syscalls_list: seccomp_blacklist.map(|p| p.to_owned()).collect()
+    })
+  } else {
+    None
+  };
+  let sandbox_params = sandbox::SandboxParams {
+    seccomp_params: seccomp_params
+  };
+  let mut command = build_command(&mut matches.values_of("program").expect("")); //TODO msg
+  sandbox::run(&sandbox_params, &mut command); //TODO: error handling
 }
