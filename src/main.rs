@@ -14,7 +14,7 @@ mod sandbox;
 
 use std::process::Command;
 use std::os::unix::process::CommandExt;
-use clap::{Arg, App, SubCommand};
+use clap::{Arg, App, SubCommand, ArgMatches};
 
 use libc::*;
 
@@ -24,6 +24,22 @@ fn build_command<'a, T: Iterator<Item = &'a str>>(program: &mut T) -> Command {
     command.arg(arg);
   }
   command
+}
+
+fn parse_seccomp_params(matches: &ArgMatches) -> Option<sandbox::SeccompParams> {
+  if let Some(seccomp_whitelist) = matches.values_of("seccomp-whitelist") {
+    Some(sandbox::SeccompParams {
+      filter_type: seccomp::SeccompFilterType::Whitelist,
+      syscalls_list: seccomp_whitelist.map(|p| p.to_owned()).collect()
+    })
+  } else if let Some(seccomp_blacklist) = matches.values_of("seccomp-blacklist") {
+    Some(sandbox::SeccompParams {
+      filter_type: seccomp::SeccompFilterType::Blacklist,
+      syscalls_list: seccomp_blacklist.map(|p| p.to_owned()).collect()
+    })
+  } else {
+    None
+  }
 }
 
 fn main() {
@@ -45,22 +61,7 @@ fn main() {
          .required(true)
          .multiple(true))
     .get_matches();
-  let seccomp_params = if let Some(seccomp_whitelist) = matches.values_of("seccomp-whitelist") {
-    Some(sandbox::SeccompParams {
-      filter_type: seccomp::SeccompFilterType::Whitelist,
-      syscalls_list: seccomp_whitelist.map(|p| p.to_owned()).collect()
-    })
-  } else if let Some(seccomp_blacklist) = matches.values_of("seccomp-blacklist") {
-    Some(sandbox::SeccompParams {
-      filter_type: seccomp::SeccompFilterType::Blacklist,
-      syscalls_list: seccomp_blacklist.map(|p| p.to_owned()).collect()
-    })
-  } else {
-    None
-  };
-  let sandbox_params = sandbox::SandboxParams {
-    seccomp_params: seccomp_params
-  };
+  let seccomp_params = parse_seccomp_params(&matches);
   let mut command = build_command(&mut matches.values_of("program").expect("")); //TODO msg
-  sandbox::run(&sandbox_params, &mut command); //TODO: error handling
+  sandbox::Sandbox::new(seccomp_params).run(&mut command); //TODO: error handling
 }

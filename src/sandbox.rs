@@ -7,14 +7,23 @@ pub struct SeccompParams {
   pub syscalls_list: Vec<String>
 }
 
-pub struct SandboxParams {
+pub struct Sandbox {
   pub seccomp_params: Option<SeccompParams>
 }
 
-pub fn run(params: &SandboxParams, command: &mut Command) -> Result<(), String> {
-  if let Some(ref seccomp_params) = params.seccomp_params {
-    try!(seccomp::activate(seccomp_params.filter_type, &seccomp_params.syscalls_list));
+impl Sandbox {
+  pub fn new(seccomp_params: Option<SeccompParams>) -> Sandbox {
+    Sandbox {
+      seccomp_params: seccomp_params
+    }
   }
-  command.exec(); //TODO: use result
-  Ok(())
+
+  pub fn run(&mut self, command: &mut Command) -> Result<(), String> {
+    if let Some(ref mut seccomp_params) = self.seccomp_params {
+      seccomp_params.syscalls_list.dedup();
+      try!(seccomp::activate(seccomp_params.filter_type, &seccomp_params.syscalls_list));
+    }
+    command.exec(); //TODO: use result
+    Ok(())
+  }
 }
