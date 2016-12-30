@@ -13,10 +13,7 @@ mod seccomp;
 mod sandbox;
 
 use std::process::Command;
-use std::os::unix::process::CommandExt;
-use clap::{Arg, App, SubCommand, ArgMatches};
-
-use libc::*;
+use clap::{Arg, App, ArgMatches};
 
 fn build_command<'a, T: Iterator<Item = &'a str>>(program: &mut T) -> Command {
   let mut command = Command::new(program.next().expect("")); //TODO msg
@@ -63,5 +60,5 @@ fn main() {
     .get_matches();
   let seccomp_params = parse_seccomp_params(&matches);
   let mut command = build_command(&mut matches.values_of("program").expect("")); //TODO msg
-  sandbox::Sandbox::new(seccomp_params).run(&mut command); //TODO: error handling
+  sandbox::Sandbox::new(seccomp_params).run(&mut command);
 }

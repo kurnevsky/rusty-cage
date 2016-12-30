@@ -18,12 +18,11 @@ impl Sandbox {
     }
   }
 
-  pub fn run(&mut self, command: &mut Command) -> Result<(), String> {
+  pub fn run(&mut self, command: &mut Command) {
     if let Some(ref mut seccomp_params) = self.seccomp_params {
       seccomp_params.syscalls_list.dedup();
-      try!(seccomp::activate(seccomp_params.filter_type, &seccomp_params.syscalls_list));
+      seccomp::activate(seccomp_params.filter_type, &seccomp_params.syscalls_list);
     }
     command.exec(); //TODO: use result
-    Ok(())
   }
 }
