@@ -17,7 +17,7 @@ use std::process::Command;
 use clap::{Arg, App, ArgMatches};
 
 fn build_command<'a, T: Iterator<Item = &'a str>>(program: &mut T) -> Command {
-  let mut command = Command::new(program.next().expect("")); //TODO msg
+  let mut command = Command::new(program.next().expect("program: at least one element is expected"));
   while let Some(arg) = program.next() {
     command.arg(arg);
   }
@@ -81,7 +81,7 @@ fn main() {
          .multiple(true))
     .get_matches();
   let seccomp_params = parse_seccomp_params(&matches);
-  let mut command = build_command(&mut matches.values_of("program").expect("")); //TODO msg
+  let mut command = build_command(&mut matches.values_of("program").expect("program expected"));
   set_panic_hook();
   sandbox::Sandbox::new(seccomp_params).run(&mut command);
 }
