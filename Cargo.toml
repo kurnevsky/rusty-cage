@@ -10,6 +10,7 @@ clap = "*"
 cfg-if = "*"
 phf = "*"
 phf_macros = "*"
+clippy = { version = "*", optional = true }
 
 [profile.dev]
 opt-level = 0

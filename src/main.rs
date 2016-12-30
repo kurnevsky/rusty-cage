@@ -1,6 +1,8 @@
 #![feature(plugin)]
 #![plugin(phf_macros)]
 
+#![cfg_attr(feature="clippy", plugin(clippy))]
+
 extern crate libc;
 extern crate clap;
 #[macro_use]
@@ -18,7 +20,7 @@ use clap::{Arg, App, ArgMatches};
 
 fn build_command<'a, T: Iterator<Item = &'a str>>(program: &mut T) -> Command {
   let mut command = Command::new(program.next().expect("program: at least one element is expected"));
-  while let Some(arg) = program.next() {
+  for arg in program {
     command.arg(arg);
   }
   command
