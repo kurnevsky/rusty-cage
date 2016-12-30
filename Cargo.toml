@@ -10,3 +10,15 @@ clap = "*"
 cfg-if = "*"
 phf = "*"
 phf_macros = "*"
+
+[profile.dev]
+opt-level = 0
+lto = false
+debug = true
+panic = "unwind"
+
+[profile.release]
+opt-level = 3
+lto = true
+debug = false
+panic = "abort"
